@@ -1,0 +1,15 @@
+{
+  "ml_prediction": {
+    "event": "fall",
+    "confidence": 0.94,
+    "timestamp": "2026-09-05T12:30:00Z"
+  },
+  "context": {
+    "heart_rate": 118,
+    "temperature_c": 38.1,
+    "latitude": 12.9716,
+    "longitude": 77.5946,
+    "inactivity_seconds": 45,
+    "user_response": "no_response"
+  }
+}
