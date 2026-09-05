@@ -1,0 +1,22 @@
+# Dataset files
+data/raw/
+data/processed/
+
+# Trained models
+models/*.pt
+models/*.pth
+models/*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local environments
+.venv/
+venv/
+
+# Logs
+*.log
