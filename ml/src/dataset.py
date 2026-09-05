@@ -208,3 +208,87 @@ def window_recording(
     )
 
     return windows, metadata
+
+
+def get_subjects(recordings: list[Path]) -> list[str]:
+    """Return unique subject IDs from a list of SisFall recordings."""
+    subjects = {
+        parse_filename(path)["subject_id"]
+        for path in recordings
+    }
+
+    return sorted(subjects)
+
+
+def split_subjects(
+    subjects: list[str],
+    train_ratio: float = 0.70,
+    val_ratio: float = 0.15,
+    seed: int = 42,
+) -> tuple[list[str], list[str], list[str]]:
+    """
+    Split subjects into train, validation, and test groups.
+
+    The split is performed at the SUBJECT level to prevent recordings
+    from the same person appearing in different splits.
+
+    For this elderly-focused project, the test set deliberately
+    contains multiple unseen elderly subjects (SE01-SE15).
+    """
+    if not subjects:
+        raise ValueError("No subjects provided.")
+
+    if not 0 < train_ratio < 1:
+        raise ValueError("train_ratio must be between 0 and 1.")
+
+    if not 0 <= val_ratio < 1:
+        raise ValueError("val_ratio must be between 0 and 1.")
+
+    if train_ratio + val_ratio >= 1:
+        raise ValueError("train_ratio + val_ratio must be less than 1.")
+
+    adults = sorted(s for s in subjects if s.startswith("SA"))
+    elderly = sorted(s for s in subjects if s.startswith("SE"))
+
+    if len(adults) + len(elderly) != len(subjects):
+        raise ValueError("Unexpected subject ID format. Expected SA or SE subjects.")
+
+    if len(adults) < 7 or len(elderly) < 15:
+        raise ValueError("Not enough adult or elderly subjects for the configured split.")
+
+    rng = np.random.default_rng(seed)
+
+    adults = np.array(adults, dtype=object)
+    elderly = np.array(elderly, dtype=object)
+
+    rng.shuffle(adults)
+    rng.shuffle(elderly)
+
+    # Deliberately reserve elderly subjects for final evaluation.
+    # Elderly: 7 train, 3 validation, 5 test.
+    # Adults: 16 train, 4 validation, 3 test.
+    elderly_train = elderly[:7].tolist()
+    elderly_val = elderly[7:10].tolist()
+    elderly_test = elderly[10:15].tolist()
+
+    adult_train = adults[:16].tolist()
+    adult_val = adults[16:20].tolist()
+    adult_test = adults[20:23].tolist()
+
+    train_subjects = sorted(adult_train + elderly_train)
+    val_subjects = sorted(adult_val + elderly_val)
+    test_subjects = sorted(adult_test + elderly_test)
+
+    return train_subjects, val_subjects, test_subjects
+
+
+def recordings_for_subjects(
+    recordings: list[Path],
+    subjects: set[str],
+) -> list[Path]:
+    """Return recordings belonging only to the supplied subjects."""
+    return [
+        path
+        for path in recordings
+        if parse_filename(path)["subject_id"] in subjects
+    ]
